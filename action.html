@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Action So Far | Club T Poker</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-900:#0b0b10; --bg-800:#111118;
+      --text-100:#f4f7ff; --text-300:#b9bfcc;
+      --neon-purple:#8a7cfb; --neon-blue:#39c8ff;
+      --card-bg:#151823; --card-border:#24283a;
+      --chip:#1e2230; --chip-active:#2a3050;
+    }
+    *{ box-sizing: border-box }
+    body{
+      margin:0; min-height:100vh;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background: linear-gradient(180deg, var(--bg-900), var(--bg-800));
+      color:var(--text-100);
+      font-family:"Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding: clamp(16px, 4vw, 32px);
+      gap: 18px;
+    }
+    header{ position:absolute; top:16px; left:16px }
+    .logo{ display:flex; align-items:center; gap:.6rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase }
+    .logo .club{ display:grid; place-items:center; width:28px; height:28px; border-radius:8px;
+      background: radial-gradient(120% 140% at 70% 10%, var(--neon-purple), #5b4bff 65%, #2b2b60 100%);
+      color:#0b0b10; font-size:18px; box-shadow:0 0 14px rgba(138,124,251,.55), inset 0 2px 8px rgba(255,255,255,.3) }
+
+    h1{ font-size:clamp(26px,6vw,44px); margin:10px 0 6px; text-align:center; text-shadow:0 0 20px rgba(138,124,251,.35) }
+    .sub{ color:var(--text-300); margin:0 0 14px; text-align:center }
+
+    .grid{
+      width:100%; max-width:1000px;
+      display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      gap:14px; margin-top:6px;
+    }
+    .card{
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
+      border-radius:14px; padding:16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25);
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+      cursor:pointer; position:relative;
+    }
+    .card:hover{ transform: translateY(-2px); border-color: rgba(138,124,251,.35); box-shadow: 0 16px 30px rgba(0,0,0,.35), 0 0 0 1px rgba(138,124,251,.25); }
+    .card.active{ border-color: rgba(57,200,255,.45); box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 2px rgba(57,200,255,.35); }
+    .card h3{ margin:0 0 6px; font-size:18px }
+    .card p{ margin:0; color:var(--text-300); font-size:13px }
+    .panel{ margin-top:12px; padding:12px; border-radius:12px; background:#121622; border:1px solid #24283a; display:none }
+    .card.active .panel{ display:block }
+
+    /* Controls */
+    .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:8px 0 }
+    .label{ font-size:13px; color:var(--text-300) }
+    .chip{
+      background:var(--chip); color:var(--text-100); border:1px solid #2a2f3d; border-radius:999px;
+      padding:.5rem .8rem; font-weight:700; cursor:pointer; transition: transform .1s ease, background .1s ease, border-color .1s ease;
+      user-select:none;
+    }
+    .chip:hover{ transform: translateY(-1px) }
+    .chip.active{ background:var(--chip-active); border-color: rgba(138,124,251,.45) }
+
+    .slider{
+      width: 220px;
+    }
+    input[type="range"]{
+      width:100%;
+      -webkit-appearance:none; appearance:none; height:4px; background:#2a2f3d; border-radius:999px; outline:none;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none; appearance:none;
+      width:18px; height:18px; border-radius:50%;
+      background: linear-gradient(180deg, var(--neon-purple), #5b4bff);
+      border:1px solid rgba(255,255,255,.25); box-shadow:0 2px 8px rgba(90,80,255,.3);
+      cursor:pointer;
+    }
+    select{
+      background:#151826; color:var(--text-100); border:1px solid #2a2f3d; border-radius:10px;
+      padding:.5rem .7rem; font-weight:700;
+    }
+
+    .actions{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap }
+    .btn, .btn:visited{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      padding:.9rem 1.1rem; border-radius:12px; text-decoration:none; font-weight:800;
+      background: var(--neon-purple); color:#0b0b10; border:1px solid rgba(138,124,251,.35);
+      transition: transform .15s ease, background .15s ease; cursor:pointer;
+    }
+    .btn:hover{ transform:scale(1.03); background: var(--neon-blue) }
+    .btn.secondary{ background: transparent; color: var(--neon-purple); border-color: rgba(138,124,251,.4) }
+    .btn.secondary:hover{ color: var(--neon-blue); border-color: rgba(57,200,255,.5) }
+    .btn[aria-disabled="true"]{ opacity:.5; pointer-events:none }
+
+    .error{
+      border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08);
+      color:#ffdede; padding:12px 14px; border-radius:10px; margin:8px 0; display:none;
+      max-width:1000px; width:100%;
+    }
+    .context{ color:var(--text-300); font-size:13px; text-align:center }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo" aria-label="Club T Poker">
+      <span class="club" aria-hidden="true">♣</span>
+      <span>Club&nbsp;T&nbsp;Poker</span>
+    </div>
+  </header>
+
+  <main style="width:100%; max-width:1080px;">
+    <h1>What’s happened before you?</h1>
+    <p class="sub">
+      Pick the situation. If needed, we’ll ask 1–3 quick follow-ups in big blinds (×BB).
+      <br/>
+      <span class="context" id="ctx">Table: <span id="p">?</span> • Position: <span id="pos">?</span> • Hand: <span id="hand">?</span></span>
+    </p>
+
+    <div id="error" class="error"></div>
+
+    <section class="grid" id="grid">
+      <!-- Unopened -->
+      <div class="card" data-situation="unopened" tabindex="0" role="button" aria-pressed="false">
+        <h3>Unopened pot</h3>
+        <p>Everyone folded to you.</p>
+        <div class="panel"><div class="label">No extra info needed.</div></div>
+      </div>
+
+      <!-- Limped -->
+      <div class="card" data-situation="limped" tabindex="0" role="button" aria-pressed="false">
+        <h3>Limped pot</h3>
+        <p>Callers, no raise yet.</p>
+        <div class="panel">
+          <div class="label">How many limpers?</div>
+          <div class="row" id="limpers-chips">
+            <span class="chip" data-value="1">1</span>
+            <span class="chip" data-value="2">2</span>
+            <span class="chip" data-value="3plus">3+</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raise -->
+      <div class="card" data-situation="raise" tabindex="0" role="button" aria-pressed="false">
+        <h3>Facing a raise</h3>
+        <p>Someone opened the pot.</p>
+        <div class="panel">
+          <div class="row">
+            <div class="label">Raise size (×BB)</div>
+            <div class="slider">
+              <input id="openSize" type="range" min="2" max="5" step="0.5" value="2.5" />
+              <div class="label"><span id="openSizeVal">2.5</span>×</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">Raiser position</div>
+            <select id="openPos"></select>
+          </div>
+          <div class="row">
+            <div class="label">Callers after raise</div>
+            <div id="openCallers" class="row">
+              <span class="chip" data-value="0">0</span>
+              <span class="chip" data-value="1">1</span>
+              <span class="chip" data-value="2plus">2+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-bet -->
+      <div class="card" data-situation="threebet" tabindex="0" role="button" aria-pressed="false">
+        <h3>Facing a 3-bet</h3>
+        <p>There’s already a re-raise.</p>
+        <div class="panel">
+          <div class="row">
+            <div class="label">3-bet size (×BB)</div>
+            <div class="slider">
+              <input id="threeBetSize" type="range" min="5" max="12" step="0.5" value="7" />
+              <div class="label"><span id="threeBetSizeVal">7</span>×</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">Is 3-bettor in position on you?</div>
+            <div id="threeBetIP" class="row">
+              <span class="chip" data-value="true">Yes</span>
+              <span class="chip" data-value="false">No</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">Any callers?</div>
+            <div id="threeBetCallers" class="row">
+              <span class="chip" data-value="0">0</span>
+              <span class="chip" data-value="1plus">1+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <a id="back" class="btn secondary" href="#">⟵ Back</a>
+      <a id="continue" class="btn" href="#" aria-disabled="true">Continue</a>
+      <a class="btn secondary" href="/">⟲ Restart</a>
+    </div>
+  </main>
+
+  <script>
+    // --- Read previous selections from URL ---
+    const params = new URLSearchParams(window.location.search);
+    const players = Number(params.get('players'));
+    const position = params.get('position') || '';
+    const hand = params.get('hand') || '';
+
+    // Show context
+    const pEl = document.getElementById('p');
+    const posEl = document.getElementById('pos');
+    const handEl = document.getElementById('hand');
+    pEl.textContent = Number.isInteger(players) ? players : '?';
+    posEl.textContent = position || '?';
+    handEl.textContent = hand || '?';
+
+    // Back link (preserve players+position)
+    const back = document.getElementById('back');
+    back.href = `/hand.html?players=${encodeURIComponent(players)}&position=${encodeURIComponent(position)}`;
+
+    // --- Build position options for the "raise" dropdown based on table size ---
+    const positionMap = {
+      2:  ["BTN/SB","BB"],
+      3:  ["BTN","SB","BB"],
+      4:  ["CO","BTN","SB","BB"],
+      5:  ["UTG","CO","BTN","SB","BB"],
+      6:  ["UTG","MP","CO","BTN","SB","BB"],
+      7:  ["UTG","MP","HJ","CO","BTN","SB","BB"],
+      8:  ["UTG","MP1","MP2","HJ","CO","BTN","SB","BB"],
+      9:  ["UTG","UTG+1","MP1","MP2","HJ","CO","BTN","SB","BB"]
+    };
+
+    // Elements
+    const grid = document.getElementById('grid');
+    const cont = document.getElementById('continue');
+    const errorEl = document.getElementById('error');
+
+    // State
+    const state = {
+      situation: null,            // 'unopened' | 'limped' | 'raise' | 'threebet'
+      limpers: '1',               // 1|2|3plus
+      openSize: 2.5,              // 2..5
+      openPos: '',                // from dropdown
+      openCallers: '0',           // 0|1|2plus
+      threeBetSize: 7,            // 5..12
+      threeBetIP: 'true',         // 'true' | 'false'
+      threeBetCallers: '0',       // 0|1plus
+    };
+
+    // Helpers
+    function setActiveCard(cardEl){
+      grid.querySelectorAll('.card').forEach(c => {
+        c.classList.remove('active');
+        c.setAttribute('aria-pressed','false');
+      });
+      cardEl.classList.add('active');
+      cardEl.setAttribute('aria-pressed','true');
+      state.situation = cardEl.dataset.situation;
+      updateContinue();
+    }
+
+    function wireChips(containerId, key){
+      const box = document.getElementById(containerId);
+      box.querySelectorAll('.chip').forEach(ch => {
+        ch.addEventListener('click', () => {
+          box.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+          ch.classList.add('active');
+          state[key] = ch.dataset.value;
+          updateContinue();
+        });
+      });
+      // activate first by default
+      const first = box.querySelector('.chip');
+      if(first){ first.classList.add('active'); state[key] = first.dataset.value; }
+    }
+
+    function buildOpenPosOptions(){
+      const sel = document.getElementById('openPos');
+      sel.innerHTML = '';
+      const opts = positionMap[players] || [];
+      opts.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p; o.textContent = p;
+        sel.appendChild(o);
+      });
+      state.openPos = opts[0] || '';
+      sel.value = state.openPos;
+      sel.addEventListener('change', () => { state.openPos = sel.value; updateContinue(); });
+    }
+
+    function wireSliders(){
+      const openSize = document.getElementById('openSize');
+      const openSizeVal = document.getElementById('openSizeVal');
+      openSize.addEventListener('input', () => {
+        openSizeVal.textContent = openSize.value;
+        state.openSize = openSize.value;
+        updateContinue();
+      });
+
+      const tbs = document.getElementById('threeBetSize');
+      const tbsVal = document.getElementById('threeBetSizeVal');
+      tbs.addEventListener('input', () => {
+        tbsVal.textContent = tbs.value;
+        state.threeBetSize = tbs.value;
+        updateContinue();
+      });
+    }
+
+    function buildNextUrl(){
+      const base = new URL('/decision.html', window.location.origin);
+      base.searchParams.set('players', players);
+      base.searchParams.set('position', position);
+      base.searchParams.set('hand', hand);
+      base.searchParams.set('situation', state.situation);
+
+      if(state.situation === 'limped'){
+        base.searchParams.set('limpers', state.limpers);
+      } else if(state.situation === 'raise'){
+        base.searchParams.set('openSize', state.openSize);
+        base.searchParams.set('openPos', state.openPos);
+        base.searchParams.set('openCallers', state.openCallers);
+      } else if(state.situation === 'threebet'){
+        base.searchParams.set('threeBetSize', state.threeBetSize);
+        base.searchParams.set('threeBetIP', state.threeBetIP);
+        base.searchParams.set('threeBetCallers', state.threeBetCallers);
+      }
+      return base.toString();
+    }
+
+    function updateContinue(){
+      // Basic validation: we need a situation; for raise/threebet we need defaults filled (we set them).
+      if(!state.situation){
+        cont.setAttribute('aria-disabled','true');
+        cont.href = '#';
+        return;
+      }
+      // ensure openPos exists for 'raise'
+      if(state.situation === 'raise' && !state.openPos){
+        cont.setAttribute('aria-disabled','true');
+        cont.href = '#';
+        return;
+      }
+      // OK to proceed
+      cont.setAttribute('aria-disabled','false');
+      cont.href = buildNextUrl();
+    }
+
+    // Wire up page
+    function init(){
+      // Validate incoming params
+      if(!Number.isInteger(players) || players < 2 || players > 9 || !position || !hand){
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Missing table size, position, or hand. Please go back and choose again.';
+      }
+
+      // Click/keyboard on cards
+      grid.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', () => setActiveCard(card));
+        card.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); setActiveCard(card); }
+        });
+      });
+
+      // Controls
+      wireChips('limpers-chips', 'limpers');
+      wireChips('openCallers', 'openCallers');
+      wireChips('threeBetIP', 'threeBetIP');
+      wireChips('threeBetCallers', 'threeBetCallers');
+      buildOpenPosOptions();
+      wireSliders();
+
+      // Initial state: nothing selected
+      updateContinue();
+    }
+
+    init();
+  </script>
+</body>
+</html>
