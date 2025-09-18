@@ -1,106 +1,180 @@
-<script>
-  // Read URL params
-  const q = new URLSearchParams(location.search);
-  const params = {
-    players: q.get('players'),
-    position: (q.get('position') || '').toUpperCase(),
-    hand: (q.get('hand') || '').toUpperCase(),
-    situation: (q.get('situation') || '').toLowerCase(),
-    limpers: q.get('limpers'),
-    openSize: q.get('openSize'),
-    openPos: q.get('openPos'),
-    openCallers: q.get('openCallers'),
-    threeBetSize: q.get('threeBetSize'),
-    threeBetIP: q.get('threeBetIP'),
-    threeBetCallers: q.get('threeBetCallers'),
-    style: q.get('style') || 'standard',
-    bluffing: q.get('bluffing') || 'normal'
-  };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Decision | Club T Poker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg-900:#0b0b10; --bg-800:#111118; --text-100:#f4f7ff; --text-300:#b9bfcc; --neon-purple:#8a7cfb; --neon-blue:#39c8ff; --card-bg:#151823; --card-border:#24283a; }
+    *{ box-sizing:border-box }
+    body{ margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(180deg,var(--bg-900),var(--bg-800)); color:var(--text-100); font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; padding:clamp(16px,4vw,32px); gap:18px; }
+    header{ position:absolute; top:16px; left:16px }
+    .logo{ display:flex; align-items:center; gap:.6rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase }
+    .logo .club{ display:grid; place-items:center; width:28px; height:28px; border-radius:8px; background:radial-gradient(120% 140% at 70% 10%, var(--neon-purple), #5b4bff 65%, #2b2b60 100%); color:#0b0b10; font-size:18px; box-shadow:0 0 14px rgba(138,124,251,.55), inset 0 2px 8px rgba(255,255,255,.3) }
+    h1{ font-size:clamp(26px,6vw,44px); margin:10px 0 6px; text-align:center; text-shadow:0 0 20px rgba(138,124,251,.35) }
+    .sub{ color:var(--text-300); margin:0 0 14px; text-align:center }
+    .grid{ width:100%; max-width:1000px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:6px; }
+    .card{ background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:16px; box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25) }
+    .card h3{ margin:0 0 8px; font-size:18px }
+    .badge{ display:inline-block; padding:.45rem .8rem; border-radius:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:#0b0b10; background:#8a7cfb; border:1px solid rgba(138,124,251,.35); box-shadow:0 10px 22px rgba(90,80,255,.25); margin-bottom:8px }
+    .badge.call{ background:#39c8ff } .badge.fold{ background:#2a2f3d; color:#f4f7ff; border-color:#3a4050; box-shadow:none }
+    .para{ color:var(--text-300); line-height:1.6 }
+    .verdict{ width:100%; max-width:1000px; margin-top:8px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25) }
+    .verdict .title{ display:flex; align-items:center; gap:10px; margin-bottom:8px }
+    .verdict .rationale{ color:var(--text-300) }
+    .actions{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap }
+    .btn, .btn:visited{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.9rem 1.1rem; border-radius:12px; text-decoration:none; font-weight:800; background:#8a7cfb; color:#0b0b10; border:1px solid rgba(138,124,251,.35); transition:transform .15s ease, background .15s ease; cursor:pointer }
+    .btn:hover{ transform:scale(1.03); background:#39c8ff }
+    .btn.secondary{ background:transparent; color:#8a7cfb; border-color:rgba(138,124,251,.4) }
+    .btn.secondary:hover{ color:#39c8ff; border-color:rgba(57,200,255,.5) }
+    .error{ border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08); color:#ffdede; padding:12px 14px; border-radius:10px; margin:8px 0; display:none; max-width:1000px; width:100% }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo" aria-label="Club T Poker">
+      <span class="club" aria-hidden="true">♣</span>
+      <span>Club&nbsp;T&nbsp;Poker</span>
+    </div>
+  </header>
 
-  // Context + back link
-  document.getElementById('ctx').textContent =
-    `Table: ${params.players} • Position: ${params.position} • Hand: ${params.hand} • Situation: ${params.situation}`;
-  const back = document.getElementById('back');
-  const backURL = new URL('/action.html', location.origin);
-  Object.entries(params).forEach(([k,v]) => { if(v) backURL.searchParams.set(k, v); });
-  back.href = backURL.toString();
+  <main style="width:100%; max-width:1080px;">
+    <h1>Your pre-flop decision (AI)</h1>
+    <p class="sub" id="ctx">Loading…</p>
+    <div id="error" class="error"></div>
 
-  // ------- Punchy, scenario-aware fallbacks (one sentence each) -------
-  function oneLineFold(p){
-    const ip = /BTN|CO/.test(p.position);
-    const oop = /SB|BB|UTG|MP/.test(p.position);
-    const bigOpen = p.openSize && parseFloat(p.openSize) > 3.0;
-    const big3b = p.threeBetSize && parseFloat(p.threeBetSize) >= 8.0;
-    const multiway = (p.openCallers && p.openCallers !== '0') || (p.threeBetCallers && p.threeBetCallers !== '0');
-    const lowBluff = p.bluffing === 'low';
-    if (big3b && oop) return "Fold to large 3-bets out of position unless holding premiums.";
-    if (bigOpen && !ip) return "Fold most marginal hands to big opens when you’re out of position.";
-    let s = "Fold more when price is poor or ranges are tight";
-    if (lowBluff) s += ", especially versus low-bluff opponents";
-    if (multiway) s += ", and when the pot is likely multiway";
-    return s + ".";
-  }
+    <!-- Three scenario-specific paragraphs -->
+    <section class="grid">
+      <div class="card">
+        <div class="badge fold">When to Fold</div>
+        <p id="fold_text" class="para">—</p>
+      </div>
+      <div class="card">
+        <div class="badge call">When to Call</div>
+        <p id="call_text" class="para">—</p>
+      </div>
+      <div class="card">
+        <div class="badge">When to Raise</div>
+        <p id="raise_text" class="para">—</p>
+      </div>
+    </section>
 
-  function oneLineCall(p){
-    const ip = /BTN|CO/.test(p.position);
-    const cheapOpen = p.openSize ? parseFloat(p.openSize) <= 3.0 : true;
-    const bluffHigh = p.bluffing === 'high';
-    let s = "Call in position at a good price";
-    if (cheapOpen && ip && p.situation === 'raise') s += ` (≈${p.openSize || "small"}× opens)`;
-    if (bluffHigh) s += ", especially versus bluff-heavy opponents";
-    s += "; prefer suited/broadways, avoid dominated offsuit OOP.";
-    return s;
-  }
+    <!-- Overall verdict -->
+    <section class="verdict" id="verdict" style="display:none;">
+      <div class="title">
+        <span id="decisionBadge" class="badge">Decision</span>
+        <strong id="decisionText"></strong>
+      </div>
+      <div class="rationale" id="rationale">—</div>
 
-  function oneLineRaise(p){
-    const ip = /BTN|CO/.test(p.position);
-    const aggro = p.style === 'aggressive';
-    let s = "Raise/3-bet premium or strong hands";
-    if (ip) s += " in position";
-    if (aggro) s += "; versus aggressive openers, value 3-bet rather than slow-play";
-    if (p.situation === 'limped') s += "; isolate limpers from late position";
-    return s + ".";
-  }
+      <div class="actions">
+        <a id="back" class="btn secondary" href="#">⟵ Back</a>
+        <a class="btn secondary" href="/">⟲ Restart</a>
+      </div>
+    </section>
+  </main>
 
-  async function run(){
-    const err = document.getElementById('error');
-    const foldEl  = document.getElementById('fold_text');
-    const callEl  = document.getElementById('call_text');
-    const raiseEl = document.getElementById('raise_text');
+  <script>
+    // Read URL params
+    const q = new URLSearchParams(location.search);
+    const params = {
+      players: q.get('players'),
+      position: (q.get('position') || '').toUpperCase(),
+      hand: (q.get('hand') || '').toUpperCase(),
+      situation: (q.get('situation') || '').toLowerCase(),
+      limpers: q.get('limpers'),
+      openSize: q.get('openSize'),
+      openPos: q.get('openPos'),
+      openCallers: q.get('openCallers'),
+      threeBetSize: q.get('threeBetSize'),
+      threeBetIP: q.get('threeBetIP'),
+      threeBetCallers: q.get('threeBetCallers'),
+      style: q.get('style') || 'standard',
+      bluffing: q.get('bluffing') || 'normal'
+    };
 
-    try{
-      const apiURL = new URL('/api/decide', location.origin);
-      Object.entries(params).forEach(([k,v]) => { if(v) apiURL.searchParams.set(k, v); });
-      const resp = await fetch(apiURL.toString());
-      if(!resp.ok) throw new Error(await resp.text());
-      const data = await resp.json();
+    // Context + back link
+    document.getElementById('ctx').textContent =
+      `Table: ${params.players} • Position: ${params.position} • Hand: ${params.hand} • Situation: ${params.situation}`;
+    const back = document.getElementById('back');
+    const backURL = new URL('/action.html', location.origin);
+    Object.entries(params).forEach(([k,v]) => { if(v) backURL.searchParams.set(k, v); });
+    back.href = backURL.toString();
 
-      // Short, scenario-specific text: prefer AI, fallback to our one-liners
-      foldEl.textContent  = (data.fold_text  && data.fold_text.trim())  ? data.fold_text  : oneLineFold(params);
-      callEl.textContent  = (data.call_text  && data.call_text.trim())  ? data.call_text  : oneLineCall(params);
-      raiseEl.textContent = (data.raise_text && data.raise_text.trim()) ? data.raise_text : oneLineRaise(params);
+    function fallbackText(kind, p){
+      const ip = /BTN|CO/.test(p.position);
+      const oop = /SB|BB|UTG|MP/.test(p.position);
+      const cheapOpen = p.openSize ? parseFloat(p.openSize) <= 3.0 : true;
+      const big3bet = p.threeBetSize ? parseFloat(p.threeBetSize) >= 8.0 : false;
+      const multiway = (p.openCallers && p.openCallers !== '0') || (p.threeBetCallers && p.threeBetCallers !== '0');
+      const bluffHigh = p.bluffing === 'high';
+      const styleAgg = p.style === 'aggressive';
 
-      // Verdict
-      const verdict = document.getElementById('verdict');
-      const badge = document.getElementById('decisionBadge');
-      const decisionText = document.getElementById('decisionText');
-      const rationale = document.getElementById('rationale');
-
-      decisionText.textContent = data.decision || '—';
-      rationale.textContent = data.rationale || '';
-      badge.className = 'badge';
-      if(/fold/i.test(data.decision)) badge.classList.add('fold');
-      else if(/call/i.test(data.decision)) badge.classList.add('call');
-      verdict.style.display = '';
-    } catch(e){
-      err.style.display = 'block';
-      err.textContent = 'Could not fetch AI decision. Showing tailored defaults.';
-      foldEl.textContent  = oneLineFold(params);
-      callEl.textContent  = oneLineCall(params);
-      raiseEl.textContent = oneLineRaise(params);
-      document.getElementById('verdict').style.display = 'none';
+      if(kind === 'fold'){
+        if (big3bet && oop) return "Prefer folding versus large 3-bets out of position unless your hand is premium.";
+        if (p.situation === 'raise' && !cheapOpen && !ip) return "Facing a big open out of position, fold most marginal and dominated hands.";
+        return "Fold when the price is poor, you’re out of position, or ranges are tight—especially if the pot is likely to go multiway.";
+      }
+      if(kind === 'call'){
+        let s = "Call when you’re in position and getting a good price with hands that realise equity well.";
+        if (bluffHigh) s += " Against bluff-heavy opponents, calling is stronger—let them barrel.";
+        if (p.situation === 'raise' && cheapOpen && ip) s += " Versus small opens in position, many suited/connected or broadway hands can profitably call.";
+        if (multiway) s += " Be selective multiway; prefer suited connectors and pairs.";
+        return s;
+      }
+      if(kind === 'raise'){
+        let s = "Raise/3-bet your premium and strong hands, especially in position or versus weak/small opens.";
+        if (styleAgg) s += " Against very aggressive opponents, 3-bet your value hands rather than slow-playing.";
+        if (p.situation === 'limped') s += " In limped pots, isolate with your top range from late position.";
+        return s;
+      }
+      return "—";
     }
-  }
 
-  run();
-</script>
+    async function run(){
+      const err = document.getElementById('error');
+      const foldEl  = document.getElementById('fold_text');
+      const callEl  = document.getElementById('call_text');
+      const raiseEl = document.getElementById('raise_text');
+
+      try{
+        const apiURL = new URL('/api/decide', location.origin);
+        Object.entries(params).forEach(([k,v]) => { if(v) apiURL.searchParams.set(k, v); });
+
+        const resp = await fetch(apiURL.toString());
+        if(!resp.ok){ throw new Error(await resp.text()); }
+        const data = await resp.json();
+
+        // Use AI scenario-specific paragraphs; fallback if any missing
+        foldEl.textContent  = data.fold_text  && data.fold_text.trim()  ? data.fold_text  : fallbackText('fold', params);
+        callEl.textContent  = data.call_text  && data.call_text.trim()  ? data.call_text  : fallbackText('call', params);
+        raiseEl.textContent = data.raise_text && data.raise_text.trim() ? data.raise_text : fallbackText('raise', params);
+
+        // Verdict
+        const verdict = document.getElementById('verdict');
+        const badge = document.getElementById('decisionBadge');
+        const decisionText = document.getElementById('decisionText');
+        const rationale = document.getElementById('rationale');
+
+        decisionText.textContent = data.decision || '—';
+        rationale.textContent = data.rationale || '';
+        badge.className = 'badge';
+        if(/fold/i.test(data.decision)) badge.classList.add('fold');
+        else if(/call/i.test(data.decision)) badge.classList.add('call');
+        verdict.style.display = '';
+      } catch(e){
+        err.style.display = 'block';
+        err.textContent = 'Could not fetch AI decision. Showing tailored defaults.';
+        // Input-aware fallback so boxes are still specific
+        foldEl.textContent  = fallbackText('fold', params);
+        callEl.textContent  = fallbackText('call', params);
+        raiseEl.textContent = fallbackText('raise', params);
+        document.getElementById('verdict').style.display = 'none';
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
