@@ -94,8 +94,10 @@
       a.className = 'btn';
       // Next step route — update to your actual next page when ready:
       // e.g., /hand.html?players=6&position=BTN
-      const nextUrl = `/hand.html?players=${players}&position=${encodeURIComponent(label)}`;
-      a.href = nextUrl;
+      const nextUrl = `./hand.html?players=${players}&position=${encodeURIComponent(label)}`;
+      a.setAttribute('href', nextUrl);
+      a.setAttribute('target', '_self');  // ensure same-tab nav
+
       a.textContent = label;
       a.setAttribute('role','button');
       return a;
