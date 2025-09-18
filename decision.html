@@ -13,7 +13,6 @@
       --text-100:#f4f7ff; --text-300:#b9bfcc;
       --neon-purple:#8a7cfb; --neon-blue:#39c8ff;
       --card-bg:#151823; --card-border:#24283a;
-      --ok:#39c8ff; --warn:#8a7cfb;
     }
     *{ box-sizing:border-box }
     body{
@@ -46,14 +45,16 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25);
     }
     .card h3{ margin:0 0 8px; font-size:18px }
-    .card ul{ margin:8px 0 0 18px; padding:0; color:var(--text-300); }
     .badge{
       display:inline-block; padding:.45rem .8rem; border-radius:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
-      color:#0b0b10; background:var(--neon-purple); border:1px solid rgba(138,124,251,.35);
+      color:#0b0b10; background:#8a7cfb; border:1px solid rgba(138,124,251,.35);
       box-shadow: 0 10px 22px rgba(90,80,255,.25);
+      margin-bottom:8px;
     }
-    .badge.call{ background: var(--ok); }
-    .badge.fold{ background: #2a2f3d; color:#f4f7ff; border-color:#3a4050; box-shadow:none }
+    .badge.call{ background:#39c8ff }
+    .badge.fold{ background:#2a2f3d; color:#f4f7ff; border-color:#3a4050; box-shadow:none }
+
+    .para{ color:var(--text-300); line-height:1.6; }
 
     .verdict{
       width:100%; max-width:1000px; margin-top:8px;
@@ -65,19 +66,16 @@
     .verdict .title{ display:flex; align-items:center; gap:10px; margin-bottom:8px }
     .verdict .rationale{ color:var(--text-300) }
 
-    .kv{ color:var(--text-300); font-size:13px; margin: 6px 0; text-align:center }
-    .kv strong{ color:var(--text-100) }
-
     .actions{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap }
     .btn, .btn:visited{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       padding:.9rem 1.1rem; border-radius:12px; text-decoration:none; font-weight:800;
-      background: var(--neon-purple); color:#0b0b10; border:1px solid rgba(138,124,251,.35);
+      background:#8a7cfb; color:#0b0b10; border:1px solid rgba(138,124,251,.35);
       transition: transform .15s ease, background .15s ease; cursor:pointer;
     }
-    .btn:hover{ transform:scale(1.03); background: var(--neon-blue) }
-    .btn.secondary{ background: transparent; color: var(--neon-purple); border-color: rgba(138,124,251,.4) }
-    .btn.secondary:hover{ color: var(--neon-blue); border-color: rgba(57,200,255,.5) }
+    .btn:hover{ transform:scale(1.03); background:#39c8ff }
+    .btn.secondary{ background:transparent; color:#8a7cfb; border-color:rgba(138,124,251,.4) }
+    .btn.secondary:hover{ color:#39c8ff; border-color:rgba(57,200,255,.5) }
 
     .error{
       border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08);
@@ -100,19 +98,19 @@
 
     <div id="error" class="error"></div>
 
-    <!-- Three reasoning boxes -->
+    <!-- Three reasoning boxes (paragraphs) -->
     <section class="grid">
       <div class="card">
         <div class="badge fold">When to Fold</div>
-        <ul id="when_fold"></ul>
+        <p id="when_fold_p" class="para">—</p>
       </div>
       <div class="card">
         <div class="badge call">When to Call</div>
-        <ul id="when_call"></ul>
+        <p id="when_call_p" class="para">—</p>
       </div>
       <div class="card">
         <div class="badge">When to Raise</div>
-        <ul id="when_raise"></ul>
+        <p id="when_raise_p" class="para">—</p>
       </div>
     </section>
 
@@ -123,7 +121,6 @@
         <strong id="decisionText"></strong>
       </div>
       <div class="rationale" id="rationale">—</div>
-      <div class="kv" id="flags" style="display:none;"></div>
 
       <div class="actions">
         <a id="back" class="btn secondary" href="#">⟵ Back</a>
@@ -137,9 +134,9 @@
     const q = new URLSearchParams(location.search);
     const params = {
       players: q.get('players'),
-      position: q.get('position'),
-      hand: q.get('hand'),
-      situation: q.get('situation'),
+      position: (q.get('position') || '').toUpperCase(),
+      hand: (q.get('hand') || '').toUpperCase(),
+      situation: (q.get('situation') || '').toLowerCase(),
       limpers: q.get('limpers'),
       openSize: q.get('openSize'),
       openPos: q.get('openPos'),
@@ -147,91 +144,115 @@
       threeBetSize: q.get('threeBetSize'),
       threeBetIP: q.get('threeBetIP'),
       threeBetCallers: q.get('threeBetCallers'),
-      // optional opponent profile defaults
       style: q.get('style') || 'standard',
       bluffing: q.get('bluffing') || 'normal'
     };
 
-    const ctx = document.getElementById('ctx');
-    const err = document.getElementById('error');
+    // Back link
+    const back = document.getElementById('back');
+    const backURL = new URL('/action.html', location.origin);
+    Object.entries(params).forEach(([k,v]) => { if(v) backURL.searchParams.set(k, v); });
+    back.href = backURL.toString();
 
-    function ctxText(p){
-      return `Table: ${p.players} • Position: ${p.position} • Hand: ${(p.hand || '').toUpperCase()} • Situation: ${p.situation}`;
+    // Context line
+    document.getElementById('ctx').textContent =
+      `Table: ${params.players} • Position: ${params.position} • Hand: ${params.hand} • Situation: ${params.situation}`;
+
+    // Helpers to make paragraph text
+    function listToSentence(list){
+      if(!Array.isArray(list) || list.length === 0) return "";
+      const clean = list.map(s => String(s).replace(/^\s*[-•]\s*/,'').trim()).filter(Boolean);
+      if(clean.length === 0) return "";
+      if(clean.length === 1) return clean[0] + ".";
+      return clean.slice(0,-1).join(", ") + ", and " + clean.slice(-1)[0] + ".";
+    }
+
+    function fallbackParagraphs(p){
+      const ip = /BTN|CO/.test(p.position);
+      const oop = /SB|BB|UTG|MP/.test(p.position);
+      const cheapOpen = p.openSize ? parseFloat(p.openSize) <= 3.0 : true;
+      const big3bet = p.threeBetSize ? parseFloat(p.threeBetSize) >= 8.0 : false;
+      const multiway = (p.openCallers && p.openCallers !== '0') || (p.threeBetCallers && p.threeBetCallers !== '0');
+      const aggro = p.style === 'aggressive';
+      const passive = p.style === 'passive';
+      const bluffHigh = p.bluffing === 'high';
+      const bluffLow = p.bluffing === 'low';
+
+      // Fold
+      let fold = "Fold more often when you’re out of position against tight ranges or large sizes, especially if the pot could go multiway.";
+      if (oop && big3bet) fold = "Fold frequently versus large 3-bets out of position unless holding premium hands.";
+      else if (p.situation === 'raise' && !cheapOpen && !ip) fold = "Facing a big open out of position, tighten up and fold most marginal hands.";
+      if (bluffLow && !ip) fold += " Against opponents who rarely bluff, prefer folding marginal spots.";
+
+      // Call
+      let call = "Call when you’re in position getting a good price with hands that realise equity well.";
+      if (bluffHigh) call += " If opponents bluff a lot, calling becomes stronger—let their aggression work for you.";
+      if (p.situation === 'raise' && cheapOpen && ip) call += " Versus small opens in position, many playable hands can profitably call.";
+      if (multiway) call += " Be cautious multiway—prefer suited connectors and pairs; avoid dominated offsuit hands.";
+
+      // Raise
+      let raise = "Raise or 3-bet with premium/strong hands, especially in position or versus weak opens.";
+      if (aggro && !bluffLow) raise += " Against overly aggressive players, 3-bet your best hands for value rather than slow-playing.";
+      if (p.situation === 'limped') raise += " In limped pots, isolate with your top range, particularly when in late position.";
+
+      return { fold, call, raise };
     }
 
     async function run(){
-      // Basic check
-      if(!params.players || !params.position || !params.hand || !params.situation){
-        err.style.display = 'block';
-        err.textContent = 'Missing info. Please go back and complete previous steps.';
-        ctx.textContent = 'Error';
-        return;
-      }
+      const err = document.getElementById('error');
+      const foldP = document.getElementById('when_fold_p');
+      const callP = document.getElementById('when_call_p');
+      const raiseP = document.getElementById('when_raise_p');
 
-      // Back link back to action.html (preserve params)
-      const back = document.getElementById('back');
-      const backURL = new URL('/action.html', location.origin);
-      Object.entries(params).forEach(([k,v]) => { if(v !== null && v !== undefined) backURL.searchParams.set(k, v); });
-      back.href = backURL.toString();
-
-      ctx.textContent = ctxText(params);
-
-      try {
-        // Call your serverless API (uses your Vercel env key)
+      // Call serverless AI
+      try{
         const apiURL = new URL('/api/decide', location.origin);
         Object.entries(params).forEach(([k,v]) => { if(v) apiURL.searchParams.set(k, v); });
 
-        const resp = await fetch(apiURL.toString(), { method: 'GET' });
+        const resp = await fetch(apiURL.toString());
         if(!resp.ok){
           const txt = await resp.text();
-          throw new Error(`API error: ${txt}`);
+          throw new Error(txt);
         }
         const data = await resp.json();
 
-        // Fill three boxes
-        const fill = (id, arr) => {
-          const ul = document.getElementById(id);
-          ul.innerHTML = '';
-          (arr || []).forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = item;
-            ul.appendChild(li);
-          });
-          if((arr || []).length === 0){
-            const li = document.createElement('li');
-            li.textContent = '—';
-            ul.appendChild(li);
-          }
-        };
-        fill('when_fold', data.when_fold);
-        fill('when_call', data.when_call);
-        fill('when_raise', data.when_raise);
+        // Prefer AI text if provided
+        const aiFold = listToSentence(data.when_fold);
+        const aiCall = listToSentence(data.when_call);
+        const aiRaise = listToSentence(data.when_raise);
 
-        // Verdict box
+        // Fallback paragraphs when arrays are empty
+        const fb = fallbackParagraphs(params);
+        foldP.textContent  = aiFold  || fb.fold;
+        callP.textContent  = aiCall  || fb.call;
+        raiseP.textContent = aiRaise || fb.raise;
+
+        // Verdict
         const verdict = document.getElementById('verdict');
         const badge = document.getElementById('decisionBadge');
         const decisionText = document.getElementById('decisionText');
         const rationale = document.getElementById('rationale');
-        const flags = document.getElementById('flags');
 
         decisionText.textContent = data.decision || '—';
         rationale.textContent = data.rationale || '';
+
         badge.className = 'badge';
         if(/fold/i.test(data.decision)) badge.classList.add('fold');
         else if(/call/i.test(data.decision)) badge.classList.add('call');
 
-        if(Array.isArray(data.risk_flags) && data.risk_flags.length){
-          flags.style.display = '';
-          flags.innerHTML = `Risk flags: <strong>${data.risk_flags.join(' • ')}</strong>`;
-        } else {
-          flags.style.display = 'none';
-        }
-
         verdict.style.display = '';
-
-      } catch (e){
+      } catch(e){
         err.style.display = 'block';
-        err.textContent = `Could not fetch AI decision. ${e.message}`;
+        err.textContent = 'Could not fetch AI decision. Showing defaults.';
+
+        // No API? Show robust defaults so the page is still useful
+        const fb = fallbackParagraphs(params);
+        foldP.textContent  = fb.fold;
+        callP.textContent  = fb.call;
+        raiseP.textContent = fb.raise;
+
+        // Hide verdict box if we don't have an AI decision
+        document.getElementById('verdict').style.display = 'none';
       }
     }
 
