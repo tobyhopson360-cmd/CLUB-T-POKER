@@ -1,52 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CLUB T POKER</title>
   <style>
-    body {
+    :root{
+      --bg-purple: #1c1333;         /* deep purple base */
+      --bg-purple-2: #0f0a1e;       /* darker purple */
+      --text: #EDEAF7;              /* soft off-white */
+      --muted: #bfb6e6;             /* muted purple for subtext */
+      --accent: #8a7cf0;            /* accent glow */
+      --card-green: #145b2c;        /* poker table felt */
+      --card-green-2: #0f4320;
+      --edge-gold: #c9a25a;         /* table edge */
+    }
+
+    /* Reset + base */
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
       margin: 0;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #0b0b0b;
-      color: white;
-      font-family: Arial, sans-serif;
-      font-size: 3rem;
-      font-weight: bold;
-      text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, #2a1f4f 0%, transparent 60%),
+        radial-gradient(1000px 700px at 120% 10%, #241b47 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg-purple) 0%, var(--bg-purple-2) 100%);
       overflow: hidden;
     }
 
-    /* Background with lots of ♣ symbols */
-    body::before {
-      content: "♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣ ♣";
-      position: absolute;
-      top: -100%;
-      left: 0;
-      width: 100%;
-      height: 300%;
-      font-size: 3rem;
-      line-height: 2.5rem;
-      color: rgba(255,255,255,0.07);
-      white-space: pre-wrap;
-      animation: scroll 20s linear infinite;
+    /* Subtle vignette for polish */
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
       pointer-events: none;
+      background: radial-gradient(120% 80% at 50% 0%, transparent 40%, rgba(0,0,0,.25) 100%);
+      mix-blend-mode: multiply;
     }
 
-    @keyframes scroll {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(100%); }
+    /* Layout */
+    .wrap {
+      position: relative;
+      min-height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 24px;
+      padding: 28px clamp(16px, 4vw, 48px);
     }
 
-    h1 {
-      z-index: 1;
+    /* Header */
+    header {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding-top: 4px;
+    }
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      font-size: clamp(32px, 6vw, 56px);
+      margin: 0 0 6px 0;
+      text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35), 0 0 24px rgba(138,124,240,.25);
+    }
+    .tagline {
+      margin: 0;
+      font-size: clamp(14px, 2.2vw, 18px);
+      color: var(--muted);
+      letter-spacing: .02em;
+    }
+
+    /* Center content (button area) */
+    .center {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Poker table “Start” button */
+    .start-btn {
+      --w: clamp(220px, 40vw, 360px);
+      --h: clamp(64px, 8vw, 84px);
+      width: var(--w);
+      height: var(--h);
+      border: 0;
+      border-radius: 999px;
+      color: #f3f7f3;
+      font-weight: 800;
+      font-size: clamp(18px, 2.6vw, 24px);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      isolation: isolate;
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.45),
+        inset 0 -2px 0 rgba(0,0,0,.2);
+      background:
+        radial-gradient(120% 160% at 50% 10%, #1b7a3a 0%, var(--card-green) 45%, var(--card-green-2) 95%);
+      outline: 3px solid rgba(201,162,90,.15);
+    }
+    .start-btn::before{
+      /* glossy highlight */
+      content:"";
+      position:absolute; inset: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 38%);
+      pointer-events:none;
+    }
+    .start-btn::after{
+      /* gold edge */
+      content:"";
+      position:absolute; inset:-6px;
+      border-radius:999px;
+      background: radial-gradient(120% 180% at 50% -20%, rgba(255,245,210,.35), rgba(255,245,210,0) 60%);
+      border: 3px solid var(--edge-gold);
+      opacity:.9;
+      pointer-events:none;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.4));
+    }
+    .start-btn:hover{
+      transform: translateY(-1px);
+      box-shadow:
+        0 14px 36px rgba(0,0,0,.55),
+        inset 0 -2px 0 rgba(0,0,0,.25);
+    }
+    .start-btn:active{
+      transform: translateY(1px);
+      box-shadow:
+        0 6px 18px rgba(0,0,0,.55),
+        inset 0 2px 0 rgba(0,0,0,.35);
+    }
+
+    /* Decorative floating symbols */
+    .symbols{
+      position: fixed;
+      inset: -10% -10% -10% -10%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .55;
+      filter: blur(.2px);
+    }
+    .symbols span{
+      position: absolute;
+      font-size: clamp(18px, 3.6vw, 38px);
+      color: rgba(255,255,255,.08);
+      text-shadow:
+        0 0 18px rgba(138,124,240,.15),
+        0 0 2px rgba(0,0,0,.5);
+      animation: floatY linear infinite;
+      will-change: transform, opacity;
+    }
+    @keyframes floatY{
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(140vh) rotate(15deg); }
+    }
+
+    /* Position a variety of symbols across the screen */
+    /* You can add/remove lines to taste */
+    .symbols span:nth-child(1){ left: 5%;  top:-20vh;  animation-duration: 28s;}
+    .symbols span:nth-child(2){ left: 14%; top:-40vh; animation-duration: 36s;}
+    .symbols span:nth-child(3){ left: 22%; top:-10vh; animation-duration: 30s;}
+    .symbols span:nth-child(4){ left: 30%; top:-50vh; animation-duration: 42s;}
+    .symbols span:nth-child(5){ left: 38%; top:-30vh; animation-duration: 33s;}
+    .symbols span:nth-child(6){ left: 46%; top:-60vh; animation-duration: 38s;}
+    .symbols span:nth-child(7){ left: 54%; top:-25vh; animation-duration: 26s;}
+    .symbols span:nth-child(8){ left: 62%; top:-55vh; animation-duration: 40s;}
+    .symbols span:nth-child(9){ left: 70%; top:-15vh; animation-duration: 29s;}
+    .symbols span:nth-child(10){left: 78%; top:-45vh; animation-duration: 37s;}
+    .symbols span:nth-child(11){left: 86%; top:-35vh; animation-duration: 31s;}
+    .symbols span:nth-child(12){left: 12%; top:-70vh; animation-duration: 44s;}
+    .symbols span:nth-child(13){left: 27%; top:-80vh; animation-duration: 46s;}
+    .symbols span:nth-child(14){left: 51%; top:-90vh; animation-duration: 48s;}
+    .symbols span:nth-child(15){left: 67%; top:-75vh; animation-duration: 41s;}
+    .symbols span:nth-child(16){left: 83%; top:-85vh; animation-duration: 45s;}
+
+    /* Footer spacing on mobile so button isn't cramped by bottom bars */
+    footer { height: 20px; }
+
+    /* Slogan accent underline */
+    .tagline .accent {
+      color: var(--text);
+      text-shadow: 0 0 16px rgba(138,124,240,.4);
+      border-bottom: 1px dashed rgba(138,124,240,.45);
+      padding-bottom: 2px;
     }
   </style>
 </head>
 <body>
-  <h1>CLUB T POKER</h1>
+  <!-- floating decorative symbols -->
+  <div class="symbols" aria-hidden="true">
+    <!-- Mix of suits & casino icons -->
+    <span>♣</span><span>♠</span><span>♦</span><span>♥</span>
+    <span>🃏</span><span>🎲</span><span>♣</span><span>♠</span>
+    <span>♦</span><span>♥</span><span>🎰</span><span>♣</span>
+    <span>♠</span><span>♦</span><span>♥</span><span>♣</span>
+  </div>
+
+  <div class="wrap">
+    <header>
+      <h1 class="brand">CLUB T POKER</h1>
+      <p class="tagline">Play smarter, <span class="accent">win more</span>.</p>
+    </header>
+
+    <main class="center">
+      <!-- Link can point to your first step later, e.g., /players -->
+      <a class="start-btn" href="#" role="button" aria-label="Start">
+        Start
+      </a>
+    </main>
+
+    <footer></footer>
+  </div>
 </body>
 </html>
