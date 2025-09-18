@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Your Decision | Club T Poker</title>
 
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
@@ -14,8 +13,9 @@
       --text-100:#f4f7ff; --text-300:#b9bfcc;
       --neon-purple:#8a7cfb; --neon-blue:#39c8ff;
       --card-bg:#151823; --card-border:#24283a;
+      --ok:#39c8ff; --warn:#8a7cfb;
     }
-    *{ box-sizing: border-box }
+    *{ box-sizing:border-box }
     body{
       margin:0; min-height:100vh;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -34,24 +34,38 @@
     h1{ font-size:clamp(26px,6vw,44px); margin:10px 0 6px; text-align:center; text-shadow:0 0 20px rgba(138,124,251,.35) }
     .sub{ color:var(--text-300); margin:0 0 14px; text-align:center }
 
+    .grid{
+      width:100%; max-width:1000px;
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      gap:14px; margin-top:6px;
+    }
     .card{
-      width:100%; max-width:900px;
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
+      border-radius:14px; padding:16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25);
+    }
+    .card h3{ margin:0 0 8px; font-size:18px }
+    .card ul{ margin:8px 0 0 18px; padding:0; color:var(--text-300); }
+    .badge{
+      display:inline-block; padding:.45rem .8rem; border-radius:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+      color:#0b0b10; background:var(--neon-purple); border:1px solid rgba(138,124,251,.35);
+      box-shadow: 0 10px 22px rgba(90,80,255,.25);
+    }
+    .badge.call{ background: var(--ok); }
+    .badge.fold{ background: #2a2f3d; color:#f4f7ff; border-color:#3a4050; box-shadow:none }
+
+    .verdict{
+      width:100%; max-width:1000px; margin-top:8px;
       background:var(--card-bg);
       border:1px solid var(--card-border);
       border-radius:14px; padding:18px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25);
     }
-    .badge{
-      display:inline-block; padding:.5rem .9rem; border-radius:12px;
-      font-weight:800; letter-spacing:.04em; text-transform:uppercase; margin-bottom:10px;
-      color:#0b0b10; background:var(--neon-purple); border:1px solid rgba(138,124,251,.35);
-      box-shadow: 0 10px 22px rgba(90,80,255,.25);
-    }
-    .badge.fold{ background:#2a2f3d; color:#f4f7ff; border-color:#3a4050; box-shadow:none }
-    .badge.call{ background:var(--neon-blue) }
-    .badge.raise{ background:var(--neon-purple) }
+    .verdict .title{ display:flex; align-items:center; gap:10px; margin-bottom:8px }
+    .verdict .rationale{ color:var(--text-300) }
 
-    .kv{ color:var(--text-300); font-size:13px; margin: 6px 0 }
+    .kv{ color:var(--text-300); font-size:13px; margin: 6px 0; text-align:center }
     .kv strong{ color:var(--text-100) }
 
     .actions{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap }
@@ -68,9 +82,8 @@
     .error{
       border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08);
       color:#ffdede; padding:12px 14px; border-radius:10px; margin:8px 0; display:none;
-      max-width:900px; width:100%;
+      max-width:1000px; width:100%;
     }
-    .explanation{ line-height:1.6; }
   </style>
 </head>
 <body>
@@ -81,22 +94,36 @@
     </div>
   </header>
 
-  <main style="width:100%; max-width:980px;">
-    <h1>Your pre-flop decision</h1>
-    <p class="sub" id="context">Table: ? • Position: ? • Hand: ? • Situation: ?</p>
+  <main style="width:100%; max-width:1080px;">
+    <h1>Your pre-flop decision (AI)</h1>
+    <p class="sub" id="ctx">Loading…</p>
 
     <div id="error" class="error"></div>
 
-    <section class="card" id="result" style="display:none;">
-      <div id="badge" class="badge">DECISION</div>
-      <div id="explain" class="explanation">Reason here…</div>
-
-      <div class="kv">
-        <strong>Hand group:</strong> <span id="group">–</span>
-        &nbsp;•&nbsp; <strong>Table-adjusted:</strong> <span id="groupAdj">–</span>
+    <!-- Three reasoning boxes -->
+    <section class="grid">
+      <div class="card">
+        <div class="badge fold">When to Fold</div>
+        <ul id="when_fold"></ul>
       </div>
+      <div class="card">
+        <div class="badge call">When to Call</div>
+        <ul id="when_call"></ul>
+      </div>
+      <div class="card">
+        <div class="badge">When to Raise</div>
+        <ul id="when_raise"></ul>
+      </div>
+    </section>
 
-      <div class="kv" id="extras" style="display:none;"></div>
+    <!-- Overall verdict -->
+    <section class="verdict" id="verdict" style="display:none;">
+      <div class="title">
+        <span id="decisionBadge" class="badge">Decision</span>
+        <strong id="decisionText"></strong>
+      </div>
+      <div class="rationale" id="rationale">—</div>
+      <div class="kv" id="flags" style="display:none;"></div>
 
       <div class="actions">
         <a id="back" class="btn secondary" href="#">⟵ Back</a>
@@ -106,194 +133,109 @@
   </main>
 
   <script>
-    // ---------- Read params ----------
+    // Read inputs from URL
     const q = new URLSearchParams(location.search);
-    const players   = Number(q.get('players'));
-    const position  = (q.get('position') || '').toUpperCase();
-    const handText  = (q.get('hand') || '').trim();
-    const situation = (q.get('situation') || '').toLowerCase();
+    const params = {
+      players: q.get('players'),
+      position: q.get('position'),
+      hand: q.get('hand'),
+      situation: q.get('situation'),
+      limpers: q.get('limpers'),
+      openSize: q.get('openSize'),
+      openPos: q.get('openPos'),
+      openCallers: q.get('openCallers'),
+      threeBetSize: q.get('threeBetSize'),
+      threeBetIP: q.get('threeBetIP'),
+      threeBetCallers: q.get('threeBetCallers'),
+      // optional opponent profile defaults
+      style: q.get('style') || 'standard',
+      bluffing: q.get('bluffing') || 'normal'
+    };
 
-    // optional follow-ups
-    const limpers         = q.get('limpers');               // 1|2|3plus
-    const openSize        = parseFloat(q.get('openSize'));  // 2..5
-    const openPos         = q.get('openPos');
-    const openCallers     = q.get('openCallers');           // 0|1|2plus
-    const threeBetSize    = parseFloat(q.get('threeBetSize')); // 5..12
-    const threeBetIP      = q.get('threeBetIP');            // 'true'|'false'
-    const threeBetCallers = q.get('threeBetCallers');       // 0|1plus
-
+    const ctx = document.getElementById('ctx');
     const err = document.getElementById('error');
-    const ctx = document.getElementById('context');
-    const result = document.getElementById('result');
-    const badge = document.getElementById('badge');
-    const explain = document.getElementById('explain');
-    const groupEl = document.getElementById('group');
-    const groupAdjEl = document.getElementById('groupAdj');
-    const extrasEl = document.getElementById('extras');
 
-    // ---------- Helpers: hand parsing & grouping ----------
-    const RANKS = "AKQJT98765432";
-    function canonKey(hand){
-      // hand like "As Ks" or "As%20Ks"
-      const parts = hand.replace(/,/g,' ').split(/\s+/).filter(Boolean);
-      if(parts.length !== 2 || parts[0].length !== 2 || parts[1].length !== 2) return null;
-      const [r1,s1] = [parts[0][0].toUpperCase(), parts[0][1].toLowerCase()];
-      const [r2,s2] = [parts[1][0].toUpperCase(), parts[1][1].toLowerCase()];
-      // sort ranks high->low
-      let hi=r1, lo=r2, sHi=s1, sLo=s2;
-      if(RANKS.indexOf(r2) < RANKS.indexOf(r1)){ hi=r2; lo=r1; sHi=s2; sLo=s1; } // r2 higher
-      if(hi===lo){ return hi+lo; } // pair e.g., 'JJ'
-      const suited = (sHi===sLo) ? 's':'o';
-      return lo+hi+suited; // e.g., AKs, AKo, KQs, etc.
+    function ctxText(p){
+      return `Table: ${p.players} • Position: ${p.position} • Hand: ${(p.hand || '').toUpperCase()} • Situation: ${p.situation}`;
     }
 
-    const PREMIUM = new Set("AA KK QQ JJ AKs AKo".split(" "));
-    const STRONG  = new Set("TT 99 AQs AJs KQs".split(" "));
-    const PLAY    = new Set("88 77 66 ATs A9s KJs QJs JTs T9s A5s A4s A3s A2s KQo".split(" "));
-    const SPEC    = new Set("55 44 33 22 98s 97s 96s 87s 86s 76s 75s 65s 54s KTs QTs J9s".split(" "));
-
-    function groupFor(key){
-      if(!key) return "Unknown";
-      if(PREMIUM.has(key)) return "Premium";
-      if(STRONG.has(key))  return "Strong";
-      if(PLAY.has(key))    return "Playable";
-      if(SPEC.has(key))    return "Speculative";
-      return "Trash";
-    }
-
-    function adjustForTable(group, nPlayers){
-      if(nPlayers >= 8 && group === "Playable") return "Speculative"; // tighter full ring
-      if(nPlayers <= 5 && group === "Speculative") return "Playable"; // looser short-handed
-      return group;
-    }
-
-    // ---------- Decision rules ----------
-    function decide(position, players, group, situation){
-      // Normalize coarse position buckets
-      const pos = position; // we can treat BTN/CO as 'Late', UTG/MP/HJ as Early/Mid
-      const isLate   = /BTN|CO/.test(pos);
-      const isEarly  = /UTG/.test(pos) || pos === 'MP1' || pos === 'MP2' || pos === 'MP';
-      const isBlind  = /SB|BB/.test(pos);
-
-      if(situation === 'unopened'){
-        if(isEarly){
-          if(group === 'Premium' || group === 'Strong') return 'Raise';
-          return 'Fold';
-        }
-        if(isBlind){
-          if(group === 'Premium' || group === 'Strong' || group === 'Playable') return 'Raise';
-          return 'Fold';
-        }
-        // Middle / Late
-        if(group === 'Premium' || group === 'Strong' || group === 'Playable') return 'Raise';
-        if(group === 'Speculative' && isLate) return 'Raise';
-        return 'Fold';
-      }
-
-      if(situation === 'limped'){
-        if(group === 'Premium' || group === 'Strong' || group === 'Playable') return 'Isolate-raise';
-        if(group === 'Speculative' && isLate) return 'Over-limp';
-        return 'Fold';
-      }
-
-      if(situation === 'raise'){
-        // very simple modifiers
-        const cheapOpen = isFinite(openSize) ? openSize <= 3.0 : true;
-        const callers   = (openCallers || '0') !== '0';
-
-        if(group === 'Premium') return '3-bet';
-        if(group === 'Strong'){
-          if(isLate && cheapOpen) return callers ? 'Call' : '3-bet';
-          return isLate ? 'Call' : 'Fold';
-        }
-        if(group === 'Playable'){
-          return (isLate && cheapOpen && !callers) ? 'Call' : 'Fold';
-        }
-        return 'Fold';
-      }
-
-      if(situation === 'threebet'){
-        if(group === 'Premium') return '4-bet/Call';
-        // allow AKs/QQ+ to continue; everything else folds for v1
-        return 'Fold';
-      }
-
-      // Fallback
-      return 'Fold';
-    }
-
-    function explainDecision(players, position, handText, group, groupAdj, situation, verdict){
-      const posNice = position.replace('/', ' / ');
-      const sitNice = ({
-        unopened:'unopened pot',
-        limped:'limped pot',
-        raise:'facing a raise',
-        threebet:'facing a 3-bet'
-      }[situation] || situation);
-
-      let tone = '';
-      if(['Raise','Isolate-raise','3-bet','4-bet/Call'].includes(verdict)) tone = 'strong enough to play aggressively';
-      else if(['Call','Over-limp'].includes(verdict)) tone = 'good enough to continue but not strong enough to re-raise';
-      else tone = 'too weak to profit in this spot';
-
-      return `With ${players} players, ${posNice}, and ${handText.toUpperCase()} (${group} → ${groupAdj}), in an ${sitNice}, your hand is ${tone} → <strong>${verdict}</strong>.`;
-    }
-
-    function badgeClass(v){
-      if(/fold/i.test(v)) return 'badge fold';
-      if(/call|over-limp/i.test(v)) return 'badge call';
-      return 'badge raise';
-    }
-
-    // ---------- Run ----------
-    (function run(){
-      // Basic validation
-      if(!Number.isInteger(players) || players < 2 || players > 9 || !position || !handText || !situation){
+    async function run(){
+      // Basic check
+      if(!params.players || !params.position || !params.hand || !params.situation){
         err.style.display = 'block';
-        err.textContent = 'Missing info. Please go back and fill the previous steps.';
+        err.textContent = 'Missing info. Please go back and complete previous steps.';
+        ctx.textContent = 'Error';
         return;
       }
 
-      ctx.textContent = `Table: ${players} • Position: ${position} • Hand: ${handText.toUpperCase()} • Situation: ${situation}`;
-
-      const key = canonKey(handText);
-      const group = groupFor(key);
-      const groupAdj = adjustForTable(group, players);
-      const verdict = decide(position, players, groupAdj, situation);
-
-      // Show result
-      result.style.display = '';
-      badge.className = badgeClass(verdict);
-      badge.textContent = verdict;
-      explain.innerHTML = explainDecision(players, position, handText, group, groupAdj, situation, verdict);
-      groupEl.textContent = group;
-      groupAdjEl.textContent = groupAdj;
-
-      // Extras summary (optional parameters)
-      const extras = [];
-      if(situation === 'limped' && limpers) extras.push(`Limpers: <strong>${limpers}</strong>`);
-      if(situation === 'raise'){
-        if(isFinite(openSize)) extras.push(`Open size: <strong>${openSize}×BB</strong>`);
-        if(openPos) extras.push(`Raiser: <strong>${openPos}</strong>`);
-        if(openCallers) extras.push(`Callers after raise: <strong>${openCallers}</strong>`);
-      }
-      if(situation === 'threebet'){
-        if(isFinite(threeBetSize)) extras.push(`3-bet size: <strong>${threeBetSize}×BB</strong>`);
-        if(threeBetIP) extras.push(`3-bettor in position: <strong>${threeBetIP}</strong>`);
-        if(threeBetCallers) extras.push(`Callers: <strong>${threeBetCallers}</strong>`);
-      }
-      if(extras.length){
-        extrasEl.style.display = '';
-        extrasEl.innerHTML = extras.join(' • ');
-      }
-
-      // Back link: return to action with all params intact
+      // Back link back to action.html (preserve params)
       const back = document.getElementById('back');
       const backURL = new URL('/action.html', location.origin);
-      ['players','position','hand','situation','limpers','openSize','openPos','openCallers','threeBetSize','threeBetIP','threeBetCallers']
-        .forEach(k => { if(q.get(k) !== null) backURL.searchParams.set(k, q.get(k)); });
+      Object.entries(params).forEach(([k,v]) => { if(v !== null && v !== undefined) backURL.searchParams.set(k, v); });
       back.href = backURL.toString();
-    })();
+
+      ctx.textContent = ctxText(params);
+
+      try {
+        // Call your serverless API (uses your Vercel env key)
+        const apiURL = new URL('/api/decide', location.origin);
+        Object.entries(params).forEach(([k,v]) => { if(v) apiURL.searchParams.set(k, v); });
+
+        const resp = await fetch(apiURL.toString(), { method: 'GET' });
+        if(!resp.ok){
+          const txt = await resp.text();
+          throw new Error(`API error: ${txt}`);
+        }
+        const data = await resp.json();
+
+        // Fill three boxes
+        const fill = (id, arr) => {
+          const ul = document.getElementById(id);
+          ul.innerHTML = '';
+          (arr || []).forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            ul.appendChild(li);
+          });
+          if((arr || []).length === 0){
+            const li = document.createElement('li');
+            li.textContent = '—';
+            ul.appendChild(li);
+          }
+        };
+        fill('when_fold', data.when_fold);
+        fill('when_call', data.when_call);
+        fill('when_raise', data.when_raise);
+
+        // Verdict box
+        const verdict = document.getElementById('verdict');
+        const badge = document.getElementById('decisionBadge');
+        const decisionText = document.getElementById('decisionText');
+        const rationale = document.getElementById('rationale');
+        const flags = document.getElementById('flags');
+
+        decisionText.textContent = data.decision || '—';
+        rationale.textContent = data.rationale || '';
+        badge.className = 'badge';
+        if(/fold/i.test(data.decision)) badge.classList.add('fold');
+        else if(/call/i.test(data.decision)) badge.classList.add('call');
+
+        if(Array.isArray(data.risk_flags) && data.risk_flags.length){
+          flags.style.display = '';
+          flags.innerHTML = `Risk flags: <strong>${data.risk_flags.join(' • ')}</strong>`;
+        } else {
+          flags.style.display = 'none';
+        }
+
+        verdict.style.display = '';
+
+      } catch (e){
+        err.style.display = 'block';
+        err.textContent = `Could not fetch AI decision. ${e.message}`;
+      }
+    }
+
+    run();
   </script>
 </body>
 </html>
