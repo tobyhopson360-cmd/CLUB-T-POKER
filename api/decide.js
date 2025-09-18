@@ -1,12 +1,12 @@
-// /api/decide.js (CommonJS so Vercel runs it without extra config)
+// /api/decide.js (CommonJS)
 module.exports = async function (req, res) {
   try {
     const {
       players, position, hand, situation,
       limpers, openSize, openPos, openCallers,
       threeBetSize, threeBetIP, threeBetCallers,
-      style = "standard",
-      bluffing = "normal"
+      style = "standard",   // aggressive | passive | standard
+      bluffing = "normal"   // high | normal | low
     } = req.query || {};
 
     if (!players || !position || !hand || !situation) {
@@ -14,19 +14,26 @@ module.exports = async function (req, res) {
     }
 
     const sys = `You are a poker pre-flop decision assistant.
-Return STRICT JSON ONLY with keys:
-decision, confidence, rationale, when_fold, when_call, when_raise, risk_flags.
-Consider price (pot odds), position, hand group, table size, and opponent tendencies.
-More bluffs -> calling improves. Tight/large sizings -> folding improves (esp OOP).
-Premium -> prefer aggressive lines. Multiway increases risk. Return minified JSON.`;
+Return STRICT JSON ONLY with this exact shape:
+{
+  "decision": "Fold | Call | Raise | 3-bet | 4-bet/Call",
+  "confidence": 0.0,
+  "rationale": "One or two sentences explaining the recommended action in this exact scenario.",
+  "fold_text": "1–2 sentences on when FOLDING is best in THIS scenario (use table size, position, sizes, and opponent tendencies).",
+  "call_text": "1–2 sentences on when CALLING is best in THIS scenario (refer to price, position, bluff frequency, multiway risk).",
+  "raise_text": "1–2 sentences on when RAISING/3-betting is best in THIS scenario (hand strength, position, opener's range/sizing).",
+  "risk_flags": ["short warnings like 'multiway', 'OOP vs strong range'"]
+}
+Rules of thumb: Factor in price (pot odds), position (IP vs OOP), hand group strength, table size, raise/3-bet sizing, opponent style (aggressive/passive) and bluffing frequency (high/normal/low). More bluffs -> calling improves (esp. IP). Tight/large sizings -> folding improves (esp. OOP). Premium hands prefer aggression (esp. IP). Be specific to the user's inputs. Output minified JSON, no backticks.`;
 
-    const usr = `Table: ${players} players
-Position: ${position}
-Hand: ${hand}
-Situation: ${situation}
-Details: limpers=${limpers ?? "-"}, openSize=${openSize ?? "-"}xBB, openPos=${openPos ?? "-"}, openCallers=${openCallers ?? "-"}, threeBetSize=${threeBetSize ?? "-"}xBB, threeBetIP=${threeBetIP ?? "-"}, threeBetCallers=${threeBetCallers ?? "-"}
-Opponent profile: style=${style}, bluffing=${bluffing}
-Return JSON only with the specified keys.`;
+    const usr = `Inputs:
+- Table: ${players} players
+- Position: ${position}
+- Hand: ${hand}
+- Situation: ${situation}
+- Details: limpers=${limpers ?? "-"}, openSize=${openSize ?? "-"}xBB, openPos=${openPos ?? "-"}, openCallers=${openCallers ?? "-"}, threeBetSize=${threeBetSize ?? "-"}xBB, threeBetIP=${threeBetIP ?? "-"}, threeBetCallers=${threeBetCallers ?? "-"}
+- Opponent profile: style=${style}, bluffing=${bluffing}
+Return JSON only with the exact keys specified. Make the *_text fields clearly tailored to this scenario.`;
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "OPENAI_API_KEY not set on server" });
@@ -54,13 +61,14 @@ Return JSON only with the specified keys.`;
     let parsed;
     try { parsed = JSON.parse(raw); }
     catch {
+      // Fallback minimal, still scenario-aware in a generic way
       parsed = {
         decision: "Call",
         confidence: 0.5,
-        rationale: "Fallback used because model did not return valid JSON.",
-        when_fold: ["Large raises out of position", "Very tight ranges from early position"],
-        when_call: ["Good price in position vs bluff-heavy players", "Playable hand with equity"],
-        when_raise: ["Premium hands for value", "Late position vs weak/open ranges"],
+        rationale: "Fallback used because the model did not return valid JSON.",
+        fold_text: "Fold more often out of position versus large sizings or tight ranges.",
+        call_text: "Call when you’re in position getting a good price, especially if opponents bluff frequently.",
+        raise_text: "Raise/3-bet premium hands for value; mix in aggression in late position versus small opens.",
         risk_flags: ["Invalid JSON from model"]
       };
     }
@@ -69,9 +77,9 @@ Return JSON only with the specified keys.`;
       decision: String(parsed.decision || "Call"),
       confidence: Number(parsed.confidence ?? 0.5),
       rationale: String(parsed.rationale || ""),
-      when_fold: Array.isArray(parsed.when_fold) ? parsed.when_fold : [],
-      when_call: Array.isArray(parsed.when_call) ? parsed.when_call : [],
-      when_raise: Array.isArray(parsed.when_raise) ? parsed.when_raise : [],
+      fold_text: String(parsed.fold_text || ""),
+      call_text: String(parsed.call_text || ""),
+      raise_text: String(parsed.raise_text || ""),
       risk_flags: Array.isArray(parsed.risk_flags) ? parsed.risk_flags : []
     };
 
