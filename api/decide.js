@@ -18,14 +18,13 @@ Return STRICT JSON ONLY with this exact shape:
 {
   "decision": "Fold | Call | Raise | 3-bet | 4-bet/Call",
   "confidence": 0.0,
-  "rationale": "Max two short sentences explaining the recommended action in THIS scenario.",
-  "fold_text": "ONE short sentence (<=18 words) tailored to THIS scenario: when folding is best. Use inputs (position, sizing, bluffing, callers).",
-  "call_text": "ONE short sentence (<=18 words) tailored to THIS scenario: when calling is best. Use inputs (price, position, bluffing).",
-  "raise_text": "ONE short sentence (<=18 words) tailored to THIS scenario: when raising/3-betting is best. Use inputs (hand strength, position, sizings).",
+  "rationale": "One or two sentences explaining the recommended action in this exact scenario.",
+  "fold_text": "1–2 sentences on when FOLDING is best in THIS scenario (use table size, position, sizes, and opponent tendencies).",
+  "call_text": "1–2 sentences on when CALLING is best in THIS scenario (refer to price, position, bluff frequency, multiway risk).",
+  "raise_text": "1–2 sentences on when RAISING/3-betting is best in THIS scenario (hand strength, position, opener's range/sizing).",
   "risk_flags": ["short warnings like 'multiway', 'OOP vs strong range'"]
 }
-Guidelines: Be specific, concise, and input-grounded. If bluffing is high, mention calling improves; if sizes are large or OOP, mention folding more.
-Output MINIFIED JSON only (no backticks, no prose).`;
+Rules of thumb: Factor in price (pot odds), position (IP vs OOP), hand group strength, table size, raise/3-bet sizing, opponent style (aggressive/passive) and bluffing frequency (high/normal/low). More bluffs -> calling improves (esp. IP). Tight/large sizings -> folding improves (esp. OOP). Premium hands prefer aggression (esp. IP). Be specific to the user's inputs. Output minified JSON, no backticks.`;
 
     const usr = `Inputs:
 - Table: ${players} players
@@ -34,7 +33,7 @@ Output MINIFIED JSON only (no backticks, no prose).`;
 - Situation: ${situation}
 - Details: limpers=${limpers ?? "-"}, openSize=${openSize ?? "-"}xBB, openPos=${openPos ?? "-"}, openCallers=${openCallers ?? "-"}, threeBetSize=${threeBetSize ?? "-"}xBB, threeBetIP=${threeBetIP ?? "-"}, threeBetCallers=${threeBetCallers ?? "-"}
 - Opponent profile: style=${style}, bluffing=${bluffing}
-Return JSON only with the exact keys specified. Each *_text must be a single, punchy sentence tied to THESE inputs.`;
+Return JSON only with the exact keys specified. Make the *_text fields clearly tailored to this scenario.`;
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "OPENAI_API_KEY not set on server" });
@@ -62,13 +61,14 @@ Return JSON only with the exact keys specified. Each *_text must be a single, pu
     let parsed;
     try { parsed = JSON.parse(raw); }
     catch {
+      // Fallback minimal, still scenario-aware in a generic way
       parsed = {
         decision: "Call",
         confidence: 0.5,
-        rationale: "Fallback used due to invalid model JSON.",
-        fold_text: "Fold OOP versus large sizing or tight ranges.",
-        call_text: "Call IP at good price, especially versus bluff-heavy opponents.",
-        raise_text: "3-bet premium hands; value-raise small opens in position.",
+        rationale: "Fallback used because the model did not return valid JSON.",
+        fold_text: "Fold more often out of position versus large sizings or tight ranges.",
+        call_text: "Call when you’re in position getting a good price, especially if opponents bluff frequently.",
+        raise_text: "Raise/3-bet premium hands for value; mix in aggression in late position versus small opens.",
         risk_flags: ["Invalid JSON from model"]
       };
     }
