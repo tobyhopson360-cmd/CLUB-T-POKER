@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Select Position | Club T Poker</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-900:#0b0b10; --bg-800:#111118;
+      --text-100:#f4f7ff; --text-300:#b9bfcc;
+      --neon-purple:#8a7cfb; --neon-blue:#39c8ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background: linear-gradient(180deg, var(--bg-900), var(--bg-800));
+      color:var(--text-100);
+      font-family:"Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding:2rem;
+    }
+    header{position:absolute; top:16px; left:16px}
+    .logo{display:flex;align-items:center;gap:.6rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-100)}
+    .logo .club{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:radial-gradient(120% 140% at 70% 10%, var(--neon-purple), #5b4bff 65%, #2b2b60 100%); color:#0b0b10; font-size:18px; box-shadow:0 0 14px rgba(138,124,251,.55), inset 0 2px 8px rgba(255,255,255,.3)}
+    h1{
+      font-size:clamp(26px,6vw,44px); margin:0 0 .5rem; text-align:center;
+      text-shadow:0 0 20px rgba(138,124,251,.35)
+    }
+    p{color:var(--text-300); margin:0 0 1.75rem; text-align:center}
+    .grid{
+      width:100%; max-width:720px;
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px;
+    }
+    a.btn{
+      display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
+      padding:.9rem 1rem; border-radius:12px; background:var(--neon-purple); color:#0b0b10;
+      font-weight:800; letter-spacing:.02em; transition:transform .15s ease, background .15s ease;
+    }
+    a.btn:hover{ transform:scale(1.05); background:var(--neon-blue) }
+    .actions{margin-top:1.75rem; display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
+    .link{color:var(--neon-purple); text-decoration:none; font-weight:600}
+    .link:hover{color:var(--neon-blue); text-decoration:underline}
+    .error{border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08); color:#ffdede; padding:12px 14px; border-radius:10px; margin-bottom:14px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo" aria-label="Club T Poker">
+      <span class="club" aria-hidden="true">♣</span>
+      <span>Club&nbsp;T&nbsp;Poker</span>
+    </div>
+  </header>
+
+  <main>
+    <h1>What position are you in?</h1>
+    <p id="subtitle">Choose your seat based on a <span id="players-count">?</span>-player table.</p>
+
+    <div id="error" class="error" style="display:none;"></div>
+    <div id="positions" class="grid" aria-live="polite"></div>
+
+    <div class="actions">
+      <a class="link" href="/players.html">⟵ Back</a>
+      <a class="link" href="/">⟲ Restart</a>
+    </div>
+  </main>
+
+  <script>
+    // Read ?players=N from the URL
+    const params = new URLSearchParams(window.location.search);
+    const players = Number(params.get('players'));
+
+    // Map table size -> position options (granular, realistic)
+    const positionMap = {
+      2:  ["Button/SB","BB"],
+      3:  ["Button","SB","BB"],
+      4:  ["CO","BTN","SB","BB"],
+      5:  ["UTG","CO","BTN","SB","BB"],
+      6:  ["UTG","MP","CO","BTN","SB","BB"],
+      7:  ["UTG","MP","HJ","CO","BTN","SB","BB"],
+      8:  ["UTG","MP1","MP2","HJ","CO","BTN","SB","BB"],
+      9:  ["UTG","UTG+1","MP1","MP2","HJ","CO","BTN","SB","BB"]
+    };
+
+    const positionsEl = document.getElementById('positions');
+    const errorEl = document.getElementById('error');
+    const playersCountEl = document.getElementById('players-count');
+
+    function makeButton(label){
+      const a = document.createElement('a');
+      a.className = 'btn';
+      // Next step route — update to your actual next page when ready:
+      // e.g., /hand.html?players=6&position=BTN
+      const nextUrl = `/hand.html?players=${players}&position=${encodeURIComponent(label)}`;
+      a.href = nextUrl;
+      a.textContent = label;
+      a.setAttribute('role','button');
+      return a;
+    }
+
+    function render(){
+      if(!Number.isInteger(players) || players < 2 || players > 9){
+        errorEl.style.display = '';
+        errorEl.textContent = 'Missing or invalid player count. Please go back and choose between 2 and 9 players.';
+        positionsEl.innerHTML = '';
+        playersCountEl.textContent = '?';
+        return;
+      }
+      playersCountEl.textContent = players.toString();
+
+      const options = positionMap[players];
+      positionsEl.innerHTML = '';
+      options.forEach(label => positionsEl.appendChild(makeButton(label)));
+    }
+
+    render();
+  </script>
+</body>
+</html>
