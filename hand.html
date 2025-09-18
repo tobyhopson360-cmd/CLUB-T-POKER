@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Select Position | Club T Poker</title>
+  <title>Select Your Cards | Club T Poker</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -13,38 +13,72 @@
       --bg-900:#0b0b10; --bg-800:#111118;
       --text-100:#f4f7ff; --text-300:#b9bfcc;
       --neon-purple:#8a7cfb; --neon-blue:#39c8ff;
+      --card-bg:#1a1d26; --card-border:#2a2f3d;
+      --card-hover: rgba(57,200,255,.3);
+      --card-selected: rgba(138,124,251,.45);
+      --spade:#b8c7ff; --club:#b8ffc6; --heart:#ffb3c1; --diamond:#aee7ff;
     }
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box }
     body{
-      margin:0; min-height:100vh;
+      margin:0; min-height:100vh; padding: clamp(16px,4vw,32px);
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       background: linear-gradient(180deg, var(--bg-900), var(--bg-800));
       color:var(--text-100);
       font-family:"Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      padding:2rem;
+      gap: 18px;
     }
     header{position:absolute; top:16px; left:16px}
-    .logo{display:flex;align-items:center;gap:.6rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-100)}
+    .logo{display:flex;align-items:center;gap:.6rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase}
     .logo .club{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:radial-gradient(120% 140% at 70% 10%, var(--neon-purple), #5b4bff 65%, #2b2b60 100%); color:#0b0b10; font-size:18px; box-shadow:0 0 14px rgba(138,124,251,.55), inset 0 2px 8px rgba(255,255,255,.3)}
-    h1{
-      font-size:clamp(26px,6vw,44px); margin:0 0 .5rem; text-align:center;
-      text-shadow:0 0 20px rgba(138,124,251,.35)
+    h1{font-size:clamp(26px,6vw,44px); margin:10px 0 6px; text-align:center; text-shadow:0 0 20px rgba(138,124,251,.35)}
+    .sub{ color:var(--text-300); margin:0 0 14px; text-align:center }
+
+    .deck{
+      width:100%; max-width:980px;
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+      gap: 12px; align-items:stretch;
     }
-    p{color:var(--text-300); margin:0 0 1.75rem; text-align:center}
-    .grid{
-      width:100%; max-width:720px;
-      display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px;
+    button.card{
+      appearance:none; border:none; cursor:pointer;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 8px; height: 100px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px rgba(0,0,0,.25);
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      position:relative; overflow:hidden;
     }
-    a.btn{
-      display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
-      padding:.9rem 1rem; border-radius:12px; background:var(--neon-purple); color:#0b0b10;
-      font-weight:800; letter-spacing:.02em; transition:transform .15s ease, background .15s ease;
+    button.card:hover{ transform: translateY(-2px); border-color: var(--card-hover); box-shadow: 0 12px 24px rgba(0,0,0,.35), 0 0 0 1px var(--card-hover); }
+    button.card.selected{ border-color: var(--card-selected); box-shadow: 0 12px 28px rgba(0,0,0,.45), 0 0 0 2px var(--card-selected); }
+
+    .rank{ font-weight:800; font-size: 22px; line-height:1; letter-spacing:.02em; }
+    .suit{ font-size: 20px; opacity:.9; }
+    .spade .rank, .spade .suit{ color: var(--spade); }
+    .club  .rank, .club  .suit{ color: var(--club); }
+    .heart .rank, .heart .suit{ color: var(--heart); }
+    .diamond .rank,.diamond .suit{ color: var(--diamond); }
+
+    .corner{ display:flex; flex-direction:column; align-items:center; }
+    .corner.bottom{ position:absolute; right:8px; bottom:8px; transform: rotate(180deg); opacity:.8; }
+
+    .actions{ margin-top: 6px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .btn, .btn:visited{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      padding:.9rem 1.1rem; border-radius:12px; text-decoration:none; font-weight:800;
+      background: var(--neon-purple); color:#0b0b10; border:1px solid rgba(138,124,251,.35);
+      transition: transform .15s ease, background .15s ease; cursor:pointer;
     }
-    a.btn:hover{ transform:scale(1.05); background:var(--neon-blue) }
-    .actions{margin-top:1.75rem; display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
-    .link{color:var(--neon-purple); text-decoration:none; font-weight:600}
-    .link:hover{color:var(--neon-blue); text-decoration:underline}
-    .error{border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08); color:#ffdede; padding:12px 14px; border-radius:10px; margin-bottom:14px}
+    .btn:hover{ transform:scale(1.03); background: var(--neon-blue); }
+    .btn.secondary{ background: transparent; color: var(--neon-purple); border-color: rgba(138,124,251,.4); }
+    .btn.secondary:hover{ color: var(--neon-blue); border-color: rgba(57,200,255,.5); }
+    .btn[aria-disabled="true"]{ opacity:.5; pointer-events:none; }
+
+    .error{
+      border:1px solid rgba(255,80,80,.35); background:rgba(255,80,80,.08);
+      color:#ffdede; padding:12px 14px; border-radius:10px; margin:8px 0; display:none;
+      max-width:980px; width:100%;
+    }
   </style>
 </head>
 <body>
@@ -55,68 +89,114 @@
     </div>
   </header>
 
-  <main>
-    <h1>What position are you in?</h1>
-    <p id="subtitle">Choose your seat based on a <span id="players-count">?</span>-player table.</p>
+  <main style="width:100%; max-width:1080px;">
+    <h1>Select your two cards</h1>
+    <p class="sub">
+      Tap two cards you’re holding. We’ll carry your choice forward.<br>
+      <small id="context">Table: <span id="players">?</span> players • Position: <span id="position">?</span></small>
+    </p>
 
-    <div id="error" class="error" style="display:none;"></div>
-    <div id="positions" class="grid" aria-live="polite"></div>
+    <div id="error" class="error"></div>
+
+    <section id="deck" class="deck" aria-live="polite"></section>
 
     <div class="actions">
-      <a class="link" href="/players.html">⟵ Back</a>
-      <a class="link" href="/">⟲ Restart</a>
+      <a class="btn secondary" href="/position.html">⟵ Back</a>
+      <a id="continue" class="btn" href="#" aria-disabled="true">Continue</a>
+      <a class="btn secondary" href="/">⟲ Restart</a>
     </div>
   </main>
 
   <script>
-    // Read ?players=N from the URL
+    // --- Read previous selections from URL ---
     const params = new URLSearchParams(window.location.search);
     const players = Number(params.get('players'));
+    const position = params.get('position') || '';
 
-    // Map table size -> position options (granular, realistic)
-    const positionMap = {
-      2:  ["Button/SB","BB"],
-      3:  ["Button","SB","BB"],
-      4:  ["CO","BTN","SB","BB"],
-      5:  ["UTG","CO","BTN","SB","BB"],
-      6:  ["UTG","MP","CO","BTN","SB","BB"],
-      7:  ["UTG","MP","HJ","CO","BTN","SB","BB"],
-      8:  ["UTG","MP1","MP2","HJ","CO","BTN","SB","BB"],
-      9:  ["UTG","UTG+1","MP1","MP2","HJ","CO","BTN","SB","BB"]
-    };
-
-    const positionsEl = document.getElementById('positions');
+    // Show context (and basic validation)
+    const playersSpan = document.getElementById('players');
+    const positionSpan = document.getElementById('position');
     const errorEl = document.getElementById('error');
-    const playersCountEl = document.getElementById('players-count');
-
-    function makeButton(label){
-      const a = document.createElement('a');
-      a.className = 'btn';
-      // Next step route — update to your actual next page when ready:
-      // e.g., /hand.html?players=6&position=BTN
-      const nextUrl = `/hand.html?players=${players}&position=${encodeURIComponent(label)}`;
-      a.href = nextUrl;
-      a.textContent = label;
-      a.setAttribute('role','button');
-      return a;
+    playersSpan.textContent = Number.isInteger(players) ? players : '?';
+    positionSpan.textContent = position || '?';
+    if(!Number.isInteger(players) || players < 2 || players > 9 || !position){
+      errorEl.style.display = 'block';
+      errorEl.textContent = 'Missing table size or position. Please go back and choose again.';
     }
 
-    function render(){
-      if(!Number.isInteger(players) || players < 2 || players > 9){
-        errorEl.style.display = '';
-        errorEl.textContent = 'Missing or invalid player count. Please go back and choose between 2 and 9 players.';
-        positionsEl.innerHTML = '';
-        playersCountEl.textContent = '?';
-        return;
+    // --- Build clickable deck of 52 cards ---
+    const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+    const suits = [
+      { key:'s', sym:'♠', cls:'spade'   },
+      { key:'h', sym:'♥', cls:'heart'   },
+      { key:'d', sym:'♦', cls:'diamond' },
+      { key:'c', sym:'♣', cls:'club'    },
+    ];
+
+    const deckEl = document.getElementById('deck');
+    const selected = [];
+
+    function makeCard(rank, suit){
+      const btn = document.createElement('button');
+      btn.className = `card ${suit.cls}`;
+      btn.type = 'button';
+      btn.dataset.rank = rank;
+      btn.dataset.suit = suit.key;
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', `${rank} of ${suit.cls}`);
+
+      const top = document.createElement('div');
+      top.className = 'corner top';
+      top.innerHTML = `<div class="rank">${rank}</div><div class="suit">${suit.sym}</div>`;
+
+      const bottom = document.createElement('div');
+      bottom.className = 'corner bottom';
+      bottom.innerHTML = `<div class="rank">${rank}</div><div class="suit">${suit.sym}</div>`;
+
+      btn.appendChild(top); btn.appendChild(bottom);
+
+      btn.addEventListener('click', () => toggleSelect(btn));
+      return btn;
+    }
+
+    function toggleSelect(btn){
+      const key = btn.dataset.rank + btn.dataset.suit;
+      const idx = selected.indexOf(key);
+
+      if(idx >= 0){
+        // deselect
+        selected.splice(idx,1);
+        btn.classList.remove('selected');
+        btn.setAttribute('aria-pressed','false');
+      } else {
+        if(selected.length === 2) return; // only allow two
+        selected.push(key);
+        btn.classList.add('selected');
+        btn.setAttribute('aria-pressed','true');
       }
-      playersCountEl.textContent = players.toString();
-
-      const options = positionMap[players];
-      positionsEl.innerHTML = '';
-      options.forEach(label => positionsEl.appendChild(makeButton(label)));
+      updateContinue();
     }
 
-    render();
+    function updateContinue(){
+      const cta = document.getElementById('continue');
+      if(selected.length === 2){
+        cta.setAttribute('aria-disabled','false');
+        // Build hand string e.g., "As Ks"
+        const handReadable = selected.map(k => {
+          const r = k[0]; const s = k[1];
+          return r + s;  // already like 'As', 'Kd' etc.
+        }).join(' ');
+        const nextURL = `/action.html?players=${encodeURIComponent(players)}&position=${encodeURIComponent(position)}&hand=${encodeURIComponent(handReadable)}`;
+        cta.href = nextURL;
+      } else {
+        cta.setAttribute('aria-disabled','true');
+        cta.href = '#';
+      }
+    }
+
+    // Render all 52 cards
+    suits.forEach(s => ranks.forEach(r => deckEl.appendChild(makeCard(r, s))));
+    updateContinue();
   </script>
 </body>
 </html>
